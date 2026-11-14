@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>DanaKita - Mobile Banking & Dompet Digital</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+          },
+          colors: {
+            brimo: {
+              50: '#eef7ff',
+              100: '#d9edff',
+              200: '#bce0ff',
+              500: '#0072e5',
+              600: '#0056b8',
+              700: '#004294',
+              800: '#003375',
+              900: '#002252',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+      background-color: #0f172a;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    /* Container responsif penuh untuk layar HP Android & terpusat di Desktop */
+    .mobile-shell {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      min-height: 100dvh;
+      margin: 0 auto;
+      background-color: #f6f9fc;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      box-shadow: 0 0 35px rgba(0, 0, 0, 0.45);
+    }
+
+    /* Header latar belakang kota senja/pagi dengan nuansa biru seperti referensi */
+    .city-header-bg {
+      background:
+        linear-gradient(180deg, rgba(8, 62, 138, 0.58) 0%, rgba(16, 98, 194, 0.65) 55%, rgba(0, 114, 229, 0.96) 100%),
+        url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1000&q=80') center 35% / cover no-repeat;
+    }
+
+    /* Kartu biru gradien Saldo Rekening Utama */
+    .saldo-card-gradient {
+      background: linear-gradient(135deg, #0066cc 0%, #0052b4 55%, #004199 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .saldo-card-gradient::before {
+      content: '';
+      position: absolute;
+      top: -35%;
+      right: -12%;
+      width: 210px;
+      height: 210px;
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Tombol QRIS bulat biru besar menonjol di tengah bottom nav */
+    .qris-center-btn {
+      background: radial-gradient(circle at 30% 25%, #1a8cff 0%, #0062cc 75%, #004ca3 100%);
+      box-shadow: 0 8px 20px rgba(0, 98, 204, 0.42), 0 0 0 6px #ffffff;
+    }
+
+    /* Hide Scrollbar */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Animasi Pop-up & Toast */
+    @keyframes modalScaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.92) translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+    .animate-modal {
+      animation: modalScaleIn 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideUpSheet {
+      from {
+        transform: translateY(100%);
+      }
+      to {
+        transform: translateY(0);
+      }
+    }
+    .animate-sheet {
+      animation: slideUpSheet 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="mobile-shell" id="app-root">
+
+    <!-- ==================== TOAST NOTIFICATION (Pengganti alert) ==================== -->
+    <div id="custom-toast" class="fixed top-5 left-1/2 -translate-x-1/2 z-[100] hidden w-[90%] max-w-[390px]">
+      <div id="custom-toast-inner" class="bg-slate-900/95 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-xs font-semibold border border-white/10">
+        <i id="custom-toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="custom-toast-msg" class="flex-1 leading-snug">Pesan notifikasi</span>
+      </div>
+    </div>
+
+    <!-- ==================== 1. HALAMAN LOGIN ==================== -->
+    <section id="screen-login" class="flex-1 flex flex-col bg-white z-40">
+      <!-- Header Visual Kota & Logo Daun DANAKITA -->
+      <div class="city-header-bg px-6 pt-12 pb-16 text-white rounded-b-[2.25rem] shadow-lg relative">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <!-- Logo Daun Putih seperti gambar referensi -->
+            <div class="w-11 h-11 bg-white rounded-2xl flex items-center justify-center shadow-md">
+              <svg class="w-7 h-7" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M29 6C17.5 6 8.5 13.5 7 26.5C6.8 28.2 7.5 29.8 8.8 30.5C12.5 24 19.5 18.5 27.5 16.5C21.5 20.5 15.5 25.5 11.8 31C21.5 31 29.5 23.5 30.5 11.5C30.7 8.5 30.2 6 29 6Z" fill="#0066CC"/>
+                <path d="M29 6C22 7.5 14 14 10 24.5C14.5 18.5 21 14 28.5 12C29.2 9.5 29.3 7.5 29 6Z" fill="#38BDF8"/>
+              </svg>
+            </div>
+            <div>
+              <span class="text-2xl font-extrabold tracking-wide block leading-none">DANAKITA</span>
+              <span class="text-[11px] text-blue-100 font-medium tracking-wider">Mobile Banking & Dompet Digital</span>
+            </div>
+          </div>
+
+          <button type="button" onclick="openHelpModal()" class="bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1.5 rounded-full text-[11px] font-semibold flex items-center gap-1.5 active:scale-95 transition">
+            <i class="fa-solid fa-headset"></i> Bantuan
+          </button>
+        </div>
+
+        <div class="mt-8">
+          <h1 class="text-2xl font-extrabold tracking-tight">Selamat Datang</h1>
+          <p class="text-xs text-blue-100 mt-1">Silakan masuk menggunakan akun DanaKita Anda</p>
+        </div>
+      </div>
+
+      <!-- Form Login Card -->
+      <div class="px-5 -mt-8 flex-1 flex flex-col justify-between pb-6">
+        <div class="bg-white rounded-3xl p-6 shadow-xl border border-slate-100">
+          <h2 class="text-base font-extrabold text-slate-800 mb-4">Login Akun</h2>
+
+          <!-- Inline Error Box -->
+          <div id="login-error-box" class="hidden mb-4 p-3 rounded-2xl bg-red-50 border border-red-200 text-red-600 text-xs font-semibold flex items-center gap-2">
+            <i class="fa-solid fa-circle-exclamation text-sm"></i>
+            <span id="login-error-msg">Username atau Password tidak sesuai.</span>
+          </div>
+
+          <form id="login-form" autocomplete="off" onsubmit="submitLoginCredentials(event)" class="space-y-4">
+            <!-- Input Username (Selalu bersih/kosong) -->
+            <div>
+              <label for="login-username" class="block text-xs font-bold text-slate-600 mb-1.5">Username</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600">
+                  <i class="fa-regular fa-user text-base"></i>
+                </span>
+                <input
+                  type="text"
+                  id="login-username"
+                  name="dk_user_field"
+                  autocomplete="off"
+                  autocapitalize="none"
+                  spellcheck="false"
+                  required
+                  placeholder="Masukkan username Anda"
+                  class="w-full pl-11 pr-4 py-3.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition"
+                >
+              </div>
+            </div>
+
+            <!-- Input Password (Selalu bersih/kosong) -->
+            <div>
+              <label for="login-password" class="block text-xs font-bold text-slate-600 mb-1.5">Password</label>
+              <div class="relative">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600">
+                  <i class="fa-solid fa-lock text-base"></i>
+                </span>
+                <input
+                  type="password"
+                  id="login-password"
+                  name="dk_pass_field"
+                  autocomplete="new-password"
+                  required
+                  placeholder="Masukkan password Anda"
+                  class="w-full pl-11 pr-12 py-3.5 text-sm bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 font-semibold placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white transition"
+                >
+                <button type="button" onclick="toggleInputPassword('login-password', 'login-eye-icon')" class="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center text-slate-400 hover:text-blue-600">
+                  <i id="login-eye-icon" class="fa-regular fa-eye"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Tombol Login Besar & Mudah Ditekan di HP -->
+            <button type="submit" class="w-full py-4 bg-gradient-to-r from-[#0066cc] to-[#004c99] hover:from-[#005bb5] hover:to-[#003d7a] text-white font-bold text-sm rounded-2xl shadow-lg shadow-blue-600/30 active:scale-[0.98] transition flex items-center justify-center gap-2 mt-2">
+              <span>Login</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </form>
+
+          <!-- Tombol Buat Akun Baru -->
+          <div class="mt-6 pt-5 border-t border-slate-100 text-center">
+            <p class="text-xs text-slate-500 mb-2.5">Belum punya rekening DanaKita?</p>
+            <button type="button" onclick="openRegisterModal()" class="w-full py-3.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-2xl border border-blue-200 active:scale-[0.98] transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-user-plus text-sm"></i>
+              <span>Buat Akun Baru / Daftar Akun Baru</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Footer Keamanan -->
+        <div class="text-center mt-6">
+          <div class="inline-flex items-center gap-1.5 text-[11px] font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+            <i class="fa-solid fa-shield-halved text-blue-600"></i>
+            <span>Dilindungi Enkripsi Keamanan DanaKita</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== MODAL VERIFIKASI PIN 6 DIGIT ==================== -->
+    <div id="modal-pin-verify" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
+      <div class="bg-white w-full max-w-[430px] rounded-t-[2rem] sm:rounded-3xl p-6 animate-sheet shadow-2xl">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-lg font-extrabold text-slate-800">Masukkan PIN 6 Digit</h3>
+          <button type="button" onclick="closePinVerifyModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center active:scale-90">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p class="text-xs text-slate-500 mb-5">Masukkan 6 digit PIN DanaKita Anda untuk melanjutkan ke Beranda.</p>
+
+        <!-- 6 Kotak Indikator PIN -->
+        <div class="grid grid-cols-6 gap-2.5 mb-4" id="pin-indicator-grid">
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+          <div class="pin-slot h-12 rounded-2xl border-2 border-slate-200 bg-slate-50 flex items-center justify-center text-xl font-extrabold text-blue-600"></div>
+        </div>
+
+        <div id="pin-error-text" class="hidden text-center text-xs font-bold text-red-600 bg-red-50 py-2 px-3 rounded-xl mb-3 border border-red-100">
+          PIN 6 Digit salah! Silakan periksa kembali.
+        </div>
+
+        <!-- Keypad Angka Besar Ramah Sentuhan Android -->
+        <div class="grid grid-cols-3 gap-2.5 select-none">
+          <button type="button" onclick="inputPinDigit('1')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">1</button>
+          <button type="button" onclick="inputPinDigit('2')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">2</button>
+          <button type="button" onclick="inputPinDigit('3')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">3</button>
+          <button type="button" onclick="inputPinDigit('4')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">4</button>
+          <button type="button" onclick="inputPinDigit('5')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">5</button>
+          <button type="button" onclick="inputPinDigit('6')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">6</button>
+          <button type="button" onclick="inputPinDigit('7')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">7</button>
+          <button type="button" onclick="inputPinDigit('8')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">8</button>
+          <button type="button" onclick="inputPinDigit('9')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">9</button>
+          <button type="button" onclick="clearPinDigits()" class="h-14 rounded-2xl bg-blue-50 active:bg-blue-100 text-blue-700 font-bold text-xs transition">Hapus</button>
+          <button type="button" onclick="inputPinDigit('0')" class="h-14 rounded-2xl bg-slate-100 active:bg-blue-600 active:text-white text-slate-800 font-extrabold text-xl transition">0</button>
+          <button type="button" onclick="backspacePinDigit()" class="h-14 rounded-2xl bg-slate-100 active:bg-slate-200 text-slate-700 font-bold text-lg flex items-center justify-center transition">
+            <i class="fa-solid fa-delete-left"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 2. DASHBOARD UTAMA (SETELAH LOGIN) ==================== -->
+    <div id="screen-dashboard" class="flex-1 flex flex-col hidden pb-24">
+
+      <!-- KONTEN TAB -->
+      <main class="flex-1 overflow-y-auto no-scrollbar">
+
+        <!-- ==================== TAB 1: HOME / BERANDA ==================== -->
+        <div id="tab-home" class="app-tab">
+          <!-- Header Latar Kota + Logo DANAKITA + Sapaan + Lonceng & Pusat Bantuan -->
+          <div class="city-header-bg px-5 pt-7 pb-20 text-white relative">
+            <!-- Top Bar: Logo DANAKITA -->
+            <div class="flex items-center gap-2.5 mb-5">
+              <div class="w-9 h-9 bg-white rounded-xl flex items-center justify-center shadow">
+                <svg class="w-6 h-6" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M29 6C17.5 6 8.5 13.5 7 26.5C6.8 28.2 7.5 29.8 8.8 30.5C12.5 24 19.5 18.5 27.5 16.5C21.5 20.5 15.5 25.5 11.8 31C21.5 31 29.5 23.5 30.5 11.5C30.7 8.5 30.2 6 29 6Z" fill="#0066CC"/>
+                  <path d="M29 6C22 7.5 14 14 10 24.5C14.5 18.5 21 14 28.5 12C29.2 9.5 29.3 7.5 29 6Z" fill="#38BDF8"/>
+                </svg>
+              </div>
+              <span class="text-xl font-extrabold tracking-wide drop-shadow-sm">DANAKITA</span>
+            </div>
+
+            <!-- Row Sapaan & Tombol Kanan Atas (Lonceng + Pusat Bantuan) -->
+            <div class="flex items-center justify-between gap-2">
+              <div>
+                <p class="text-xs font-medium text-blue-50 drop-shadow-sm" id="greeting-label">Selamat Sore,</p>
+                <h1 class="text-2xl font-extrabold tracking-tight leading-tight drop-shadow-sm" id="display-user-greeting">Rangga</h1>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <!-- Ikon Lonceng Notifikasi dengan Titik Merah -->
+                <button type="button" onclick="openNotificationsModal()" aria-label="Notifikasi" class="w-10 h-10 rounded-full bg-slate-900/35 backdrop-blur-md border border-white/25 flex items-center justify-center text-white relative active:scale-90 transition">
+                  <i class="fa-regular fa-bell text-base"></i>
+                  <span class="absolute top-1.5 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-800"></span>
+                </button>
+
+                <!-- Tombol Pusat Bantuan di Kanan Atas -->
+                <button type="button" onclick="openHelpModal()" class="bg-slate-900/35 backdrop-blur-md border border-white/25 px-3 py-1.5 rounded-full flex items-center gap-2 text-left active:scale-95 transition">
+                  <i class="fa-solid fa-headset text-base text-white"></i>
+                  <span class="text-[10px] font-bold leading-tight text-white">Pusat<br>Bantuan</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Lengkungan Putih Halus di Bawah Header seperti Gambar -->
+            <div class="absolute bottom-0 left-0 right-0 h-8 bg-[#f6f9fc] rounded-t-[2rem]"></div>
+          </div>
+
+          <!-- Kartu Biru Gradien 'Saldo Rekening Utama' + 'Semua Rekeningmu ->' -->
+          <div class="px-4 -mt-16 relative z-10">
+            <div class="saldo-card-gradient rounded-[1.5rem] p-5 text-white shadow-xl shadow-blue-900/15">
+              <!-- Dekorasi Daun Transparan di Kanan Kartu seperti Referensi -->
+              <svg class="w-24 h-24 absolute right-3 top-3 opacity-10 pointer-events-none" viewBox="0 0 36 36" fill="none">
+                <path d="M29 6C17.5 6 8.5 13.5 7 26.5C6.8 28.2 7.5 29.8 8.8 30.5C12.5 24 19.5 18.5 27.5 16.5C21.5 20.5 15.5 25.5 11.8 31C21.5 31 29.5 23.5 30.5 11.5C30.7 8.5 30.2 6 29 6Z" fill="#FFFFFF"/>
+              </svg>
+
+              <p class="text-xs font-semibold text-blue-100 mb-2">Saldo Rekening Utama</p>
+
+              <!-- Baris Nominal / Titik-Titik + Ikon Mata -->
+              <div class="flex items-center gap-3 mb-4 min-h-[32px]">
+                <div id="saldo-value-display" class="text-2xl font-extrabold tracking-wider flex items-center gap-1.5">
+                  <!-- Default tersembunyi (••••••) seperti gambar referensi -->
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                  <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+                </div>
+                <button type="button" onclick="toggleSaldoDisplay()" aria-label="Tampilkan atau sembunyikan saldo" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-white active:scale-90 transition">
+                  <i id="saldo-eye-icon" class="fa-solid fa-eye text-base"></i>
+                </button>
+              </div>
+
+              <!-- Garis Pemisah & Baris 'Semua Rekeningmu ->' -->
+              <button type="button" onclick="openAccountModal()" class="w-full pt-3 border-t border-white/25 flex items-center justify-between text-left group active:opacity-80 transition">
+                <span class="text-sm font-bold tracking-wide">Semua Rekeningmu</span>
+                <i class="fa-solid fa-arrow-right text-base group-hover:translate-x-1 transition-transform"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Ikon Layanan Utama Sejajar (Card Putih Membulat di Bawah Saldo) -->
+          <div class="px-4 mt-3.5">
+            <div class="bg-white rounded-3xl p-4 shadow-sm border border-slate-100/80 grid grid-cols-4 gap-2 text-center">
+              <!-- 1. Transfer -->
+              <button type="button" onclick="openPremiumPopup('Transfer')" class="searchable-service flex flex-col items-center group active:scale-95 transition" data-keywords="transfer kirim uang">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5 shadow-inner">
+                  <div class="w-9 h-7 rounded-lg bg-gradient-to-tr from-blue-600 to-sky-400 flex items-center justify-center text-white relative shadow-sm">
+                    <i class="fa-solid fa-money-bill-wave text-xs"></i>
+                    <span class="w-3.5 h-3.5 rounded-full bg-blue-700 text-white text-[8px] flex items-center justify-center absolute -bottom-1 -right-1 border border-white">
+                      <i class="fa-solid fa-arrow-right"></i>
+                    </span>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Transfer</span>
+              </button>
+
+              <!-- 2. Transfer AntarBank -->
+              <button type="button" onclick="openPremiumPopup('Transfer AntarBank')" class="searchable-service flex flex-col items-center group active:scale-95 transition" data-keywords="transfer antarbank bank lain">
+                <div class="w-14 h-14 rounded-2xl bg-[#e6f9f8] flex items-center justify-center mb-1.5 shadow-inner">
+                  <div class="px-2 py-1.5 rounded-lg bg-gradient-to-tr from-teal-500 to-cyan-400 text-white font-extrabold text-[9px] tracking-tight shadow-sm flex items-center gap-0.5">
+                    <i class="fa-solid fa-building-columns text-[10px]"></i>
+                    <span>BANK</span>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Transfer AntarBank</span>
+              </button>
+
+              <!-- 3. Setor/Tarik Tunai -->
+              <button type="button" onclick="openPremiumPopup('Setor/Tarik Tunai')" class="searchable-service flex flex-col items-center group active:scale-95 transition" data-keywords="setor tarik tunai atm">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5 shadow-inner">
+                  <div class="w-9 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-blue-400 flex flex-col items-center justify-center text-white shadow-sm">
+                    <span class="text-[7px] font-black bg-white/25 px-1 rounded mb-0.5">ATM</span>
+                    <i class="fa-solid fa-money-bill-transfer text-[11px]"></i>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Setor/Tarik Tunai</span>
+              </button>
+
+              <!-- 4. Pulsa/Data -->
+              <button type="button" onclick="openPremiumPopup('Pulsa/Data')" class="searchable-service flex flex-col items-center group active:scale-95 transition" data-keywords="pulsa data paket internet">
+                <div class="w-14 h-14 rounded-2xl bg-[#e8faef] flex items-center justify-center mb-1.5 shadow-inner">
+                  <div class="w-7 h-9 rounded-lg bg-gradient-to-b from-emerald-400 to-green-500 p-0.5 flex items-center justify-center shadow-sm">
+                    <div class="w-full h-full bg-white rounded-[5px] flex items-center justify-center text-emerald-500">
+                      <i class="fa-solid fa-bolt text-xs"></i>
+                    </div>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Pulsa/Data</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Kolom Pencarian 'Cari fitur' Berbentuk Kapsul Biru Muda -->
+          <div class="px-4 mt-4">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-blue-600 text-base"></i>
+              <input
+                type="text"
+                id="feature-search-input"
+                oninput="filterDashboardFeatures(this.value)"
+                placeholder="Cari fitur"
+                class="w-full pl-11 pr-10 py-3 bg-[#e9f3fe] border border-blue-200/80 rounded-full text-sm font-semibold text-blue-900 placeholder-blue-500/80 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+              >
+              <button type="button" id="clear-search-btn" onclick="clearFeatureSearch()" class="hidden absolute right-3.5 top-1/2 -translate-y-1/2 text-blue-500 hover:text-blue-700">
+                <i class="fa-solid fa-circle-xmark"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Grid 2x4 Layanan Favorit seperti Referensi -->
+          <div class="px-4 mt-5 pb-6">
+            <div class="flex items-center justify-between mb-3 px-1">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Layanan Favorit</h2>
+              <span id="search-result-count" class="text-[11px] font-semibold text-blue-600 hidden"></span>
+            </div>
+
+            <div id="favorite-services-grid" class="grid grid-cols-4 gap-y-5 gap-x-2 text-center">
+              <!-- 1. Top Up -->
+              <button type="button" onclick="openPremiumPopup('Top Up')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="top up ewallet dana ovo gopay shopeepay">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="w-9 h-7 rounded-lg bg-gradient-to-tr from-emerald-500 to-green-400 flex items-center justify-center text-white relative shadow-sm">
+                    <i class="fa-solid fa-wallet text-xs"></i>
+                    <span class="w-3.5 h-3.5 rounded-full bg-emerald-700 text-white text-[9px] font-bold flex items-center justify-center absolute -bottom-1 -left-1 border border-white">+</span>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Top Up</span>
+              </button>
+
+              <!-- 2. BRIZZI -->
+              <button type="button" onclick="openPremiumPopup('BRIZZI')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="brizzi kartu tol emoney">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="px-2 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-green-500 text-white font-extrabold text-[9px] tracking-wider shadow-sm">
+                    BRIZZI
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">BRIZZI</span>
+              </button>
+
+              <!-- 3. Tagihan -->
+              <button type="button" onclick="openPremiumPopup('Tagihan')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="tagihan listrik pln bpjs cicilan">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="w-8 h-9 rounded-lg bg-gradient-to-b from-cyan-400 to-teal-500 flex items-center justify-center text-white relative shadow-sm">
+                    <span class="text-[9px] font-extrabold">Rp</span>
+                    <span class="w-3.5 h-3.5 rounded-full bg-teal-700 text-white text-[8px] flex items-center justify-center absolute -bottom-1 -right-1 border border-white">
+                      <i class="fa-solid fa-check"></i>
+                    </span>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Tagihan</span>
+              </button>
+
+              <!-- 4. PDAM -->
+              <button type="button" onclick="openPremiumPopup('PDAM')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="pdam air minum tagihan air">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="w-8 h-9 flex items-center justify-center text-cyan-500 drop-shadow-sm">
+                    <i class="fa-solid fa-droplet text-2xl"></i>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">PDAM</span>
+              </button>
+
+              <!-- 5. Lifestyle (dengan badge titik merah seperti referensi) -->
+              <button type="button" onclick="openPremiumPopup('Lifestyle')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="lifestyle belanja tiket hiburan">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5 relative">
+                  <div class="w-8 h-8 rounded-xl bg-gradient-to-b from-pink-400 to-rose-500 flex items-center justify-center text-white shadow-sm">
+                    <i class="fa-solid fa-bag-shopping text-sm"></i>
+                  </div>
+                  <span class="w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white absolute -top-0.5 -right-0.5"></span>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Lifestyle</span>
+              </button>
+
+              <!-- 6. Debit Virtual -->
+              <button type="button" onclick="openPremiumPopup('Debit Virtual')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="debit virtual kartu online">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="w-7 h-9 rounded-lg bg-gradient-to-b from-sky-500 to-blue-600 p-0.5 flex items-center justify-center relative shadow-sm">
+                    <div class="w-full h-full bg-white rounded-[5px] flex items-center justify-center text-blue-600">
+                      <i class="fa-solid fa-credit-card text-[10px]"></i>
+                    </div>
+                    <span class="px-1 py-0.2 bg-blue-600 text-white text-[7px] font-extrabold rounded absolute -right-2 top-2 border border-white">Rp</span>
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Debit<br>Virtual</span>
+              </button>
+
+              <!-- 7. Catatan Keuangan -->
+              <button type="button" onclick="openPremiumPopup('Catatan Keuangan')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="catatan keuangan laporan pemasukan pengeluaran">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5">
+                  <div class="w-8 h-9 rounded-lg bg-gradient-to-b from-amber-400 to-orange-500 flex items-center justify-center text-white font-extrabold text-[10px] shadow-sm">
+                    Rp
+                  </div>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Catatan<br>Keuangan</span>
+              </button>
+
+              <!-- 8. Investasi (dengan badge titik merah seperti referensi) -->
+              <button type="button" onclick="openPremiumPopup('Investasi')" class="searchable-service flex flex-col items-center active:scale-95 transition" data-keywords="investasi emas reksadana sbn">
+                <div class="w-14 h-14 rounded-2xl bg-[#eaf4ff] flex items-center justify-center mb-1.5 relative">
+                  <div class="w-8 h-8 rounded-full bg-gradient-to-b from-amber-400 to-orange-500 flex items-center justify-center text-white font-extrabold text-[10px] shadow-sm">
+                    Rp
+                  </div>
+                  <span class="w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white absolute -top-0.5 -right-0.5"></span>
+                </div>
+                <span class="text-[11px] font-bold text-slate-800 leading-tight">Investasi</span>
+              </button>
+            </div>
+
+            <!-- Pesan jika pencarian tidak ditemukan -->
+            <div id="empty-search-state" class="hidden text-center py-8 bg-white rounded-3xl border border-slate-100 mt-2">
+              <i class="fa-solid fa-magnifying-glass text-2xl text-slate-300 mb-2"></i>
+              <p class="text-xs font-bold text-slate-500">Fitur tidak ditemukan</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 2: MUTASI ==================== -->
+        <div id="tab-mutasi" class="app-tab hidden">
+          <!-- Header Biru Mutasi -->
+          <div class="bg-gradient-to-r from-[#0066cc] to-[#004c99] px-5 pt-8 pb-6 text-white rounded-b-3xl shadow-md">
+            <h1 class="text-lg font-extrabold tracking-tight">Mutasi Rekening Real-time</h1>
+            <p class="text-xs text-blue-100 mt-0.5">Pantau seluruh arus dana masuk & keluar rekening Anda</p>
+
+            <!-- Info Rekening Utama -->
+            <div class="mt-4 bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl p-4 flex items-center justify-between">
+              <div>
+                <p class="text-[11px] text-blue-100 font-medium">Nomor Rekening Utama (<span id="mutasi-owner-name">RANGGA</span>)</p>
+                <p class="text-base font-extrabold tracking-wider mt-0.5" id="mutasi-account-number">3182 2937 2293 103</p>
+              </div>
+              <button type="button" onclick="copyAccountNumber()" class="px-3 py-2 bg-white text-blue-700 rounded-xl text-xs font-extrabold active:scale-95 transition flex items-center gap-1.5 shadow-sm">
+                <i class="fa-regular fa-copy"></i> Salin
+              </button>
+            </div>
+          </div>
+
+          <!-- Daftar Riwayat Transaksi dari localStorage -->
+          <div class="p-4 space-y-3">
+            <div class="flex items-center justify-between px-1">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider">Riwayat Transaksi</h2>
+              <span class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">Real-time</span>
+            </div>
+
+            <div id="mutasi-list-container" class="space-y-3">
+              <!-- Diisi dinamis oleh JS dari localStorage -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 3: AKTIVITAS ==================== -->
+        <div id="tab-aktivitas" class="app-tab hidden">
+          <div class="bg-gradient-to-r from-[#0066cc] to-[#004c99] px-5 pt-8 pb-6 text-white rounded-b-3xl shadow-md">
+            <h1 class="text-lg font-extrabold tracking-tight">Aktivitas & Catatan Keuangan</h1>
+            <p class="text-xs text-blue-100 mt-0.5">Ringkasan pemasukan dan pengeluaran akun Anda</p>
+
+            <!-- Ringkasan Pemasukan & Pengeluaran -->
+            <div class="grid grid-cols-2 gap-3 mt-4">
+              <div class="bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl p-3.5">
+                <div class="flex items-center gap-1.5 text-emerald-300 text-[11px] font-bold mb-1">
+                  <i class="fa-solid fa-arrow-trend-up"></i>
+                  <span>Total Pemasukan</span>
+                </div>
+                <p class="text-sm font-extrabold text-white" id="aktivitas-total-in">Rp52.153.000,00</p>
+              </div>
+
+              <div class="bg-white/15 backdrop-blur-md border border-white/25 rounded-2xl p-3.5">
+                <div class="flex items-center gap-1.5 text-rose-200 text-[11px] font-bold mb-1">
+                  <i class="fa-solid fa-arrow-trend-down"></i>
+                  <span>Total Pengeluaran</span>
+                </div>
+                <p class="text-sm font-extrabold text-white" id="aktivitas-total-out">Rp0,00</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Daftar Aktivitas & Catatan Transaksi -->
+          <div class="p-4 space-y-3">
+            <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider px-1">Aktivitas & Catatan Transaksi</h2>
+            <div id="aktivitas-list-container" class="space-y-3">
+              <!-- Sinkron dengan riwayat localStorage -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== TAB 4: AKUN ==================== -->
+        <div id="tab-akun" class="app-tab hidden">
+          <!-- Header Profil Akun -->
+          <div class="bg-gradient-to-r from-[#0066cc] to-[#004c99] px-5 pt-8 pb-7 text-white rounded-b-3xl shadow-md">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3.5">
+                <div class="w-14 h-14 rounded-2xl bg-white text-blue-700 font-black text-2xl flex items-center justify-center shadow-md" id="akun-avatar-initial">
+                  R
+                </div>
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h1 class="text-lg font-extrabold tracking-tight" id="akun-header-name">RANGGA</h1>
+                    <span class="text-[10px] font-extrabold bg-amber-400 text-slate-900 px-2 py-0.5 rounded-full">Reguler</span>
+                  </div>
+                  <p class="text-xs text-blue-100 mt-0.5" id="akun-header-username">@Rangga_123</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-4 space-y-4">
+            <!-- Informasi & Detail Akun -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-3">Informasi & Detail Akun</h2>
+              <div class="divide-y divide-slate-100 text-xs">
+                <div class="py-2.5 flex justify-between items-center">
+                  <span class="text-slate-500 font-medium">Nama Rekening</span>
+                  <span class="font-extrabold text-slate-800" id="detail-nama-rekening">RANGGA</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center">
+                  <span class="text-slate-500 font-medium">Nomor Rekening</span>
+                  <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-blue-700" id="detail-nomor-rekening">3182 2937 2293 103</span>
+                    <button type="button" onclick="copyAccountNumber()" class="text-blue-600 hover:text-blue-800 p-1">
+                      <i class="fa-regular fa-copy"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="py-2.5 flex justify-between items-center">
+                  <span class="text-slate-500 font-medium">Username</span>
+                  <span class="font-extrabold text-slate-800" id="detail-username">Rangga_123</span>
+                </div>
+                <div class="py-2.5 flex justify-between items-center">
+                  <span class="text-slate-500 font-medium">Status Akun</span>
+                  <span class="font-extrabold text-amber-600 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-200">Reguler</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fitur Keamanan Akun -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-2.5">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Fitur Keamanan Akun</h2>
+
+              <!-- a. Ubah PIN 6 Digit -->
+              <button type="button" onclick="openChangePinModal()" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <i class="fa-solid fa-key"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Ubah PIN 6 Digit</p>
+                    <p class="text-[11px] text-slate-500">Perbarui PIN otorisasi transaksi Anda</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+              </button>
+
+              <!-- b. Ubah Password Login -->
+              <button type="button" onclick="openChangePasswordModal()" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                    <i class="fa-solid fa-shield-halved"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Ubah Password Login</p>
+                    <p class="text-[11px] text-slate-500">Kombinasi huruf kapital, kecil & angka</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+              </button>
+
+              <!-- c. Login Biometrik Sidik Jari (Premium) -->
+              <button type="button" onclick="openPremiumPopup('Login Biometrik Sidik Jari')" class="w-full p-3.5 rounded-2xl bg-slate-50 hover:bg-blue-50/70 border border-slate-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center">
+                    <i class="fa-solid fa-fingerprint text-lg"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Login Biometrik Sidik Jari</p>
+                    <p class="text-[11px] text-slate-500">Pendaftaran sidik jari Fingerprint</p>
+                  </div>
+                </div>
+                <span class="text-[10px] font-extrabold bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full">Premium</span>
+              </button>
+            </div>
+
+            <!-- Pengelolaan Kartu & Limit (Premium) -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-2.5">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Pengaturan Rekening & Kartu</h2>
+
+              <button type="button" onclick="openPremiumPopup('Pengelolaan Kartu Debit')" class="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <i class="fa-solid fa-credit-card"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Pengelolaan Kartu Debit</p>
+                    <p class="text-[11px] text-slate-500">Atur kartu fisik & virtual DanaKita</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+              </button>
+
+              <button type="button" onclick="openPremiumPopup('Pengaturan Limit dan Sumber Dana')" class="w-full p-3.5 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-teal-100 text-teal-600 flex items-center justify-center">
+                    <i class="fa-solid fa-sliders"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Pengaturan Limit dan Sumber Dana</p>
+                    <p class="text-[11px] text-slate-500">Atur limit transaksi harian Anda</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+              </button>
+            </div>
+
+            <!-- Pusat Bantuan & Layanan -->
+            <div class="bg-white rounded-3xl p-5 shadow-sm border border-slate-100 space-y-2.5">
+              <h2 class="text-xs font-extrabold text-slate-500 uppercase tracking-wider mb-1">Pusat Bantuan & Layanan</h2>
+
+              <!-- Help Center -->
+              <button type="button" onclick="openHelpModal()" class="w-full p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100 flex items-center justify-between text-left active:scale-[0.99] transition">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center">
+                    <i class="fa-solid fa-headset"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Pusat Bantuan (Help Center)</p>
+                    <p class="text-[11px] text-slate-500">Pengaduan transaksi, tiket & FAQ</p>
+                  </div>
+                </div>
+                <i class="fa-solid fa-chevron-right text-xs text-blue-600"></i>
+              </button>
+
+              <!-- Kontak DanaKita (Call & Chat Andini) -->
+              <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-100 space-y-2.5">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center">
+                    <i class="fa-brands fa-whatsapp text-xl"></i>
+                  </div>
+                  <div>
+                    <p class="text-xs font-extrabold text-slate-800">Kontak DanaKita</p>
+                    <p class="text-[11px] text-slate-600">ANDINI JULIYASIH (+62 898-0432-807)</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <a href="tel:+628980432807" class="py-2.5 bg-white border border-emerald-200 text-emerald-700 rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 active:scale-95 transition">
+                    <i class="fa-solid fa-phone"></i> Call DanaKita
+                  </a>
+                  <a href="https://wa.me/628980432807?text=Halo%20kak%20Andini,%20saya%20butuh%20bantuan%20layanan%20DanaKita." target="_blank" rel="noopener noreferrer" class="py-2.5 bg-emerald-500 text-white rounded-xl text-xs font-extrabold flex items-center justify-center gap-1.5 active:scale-95 transition shadow-sm">
+                    <i class="fa-brands fa-whatsapp text-sm"></i> Chat Andini
+                  </a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tombol Keluar (Logout) -->
+            <button type="button" onclick="logoutUser()" class="w-full py-4 bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-xs rounded-2xl border border-red-200 flex items-center justify-center gap-2 active:scale-[0.98] transition">
+              <i class="fa-solid fa-right-from-bracket text-sm"></i>
+              <span>Keluar dari Akun</span>
+            </button>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- ==================== BOTTOM NAVIGATION BAR (SESUAI REFERENSI) ==================== -->
+      <nav class="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-slate-200/90 px-2 pt-2 pb-3 flex items-center justify-between z-40 shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <!-- Home -->
+        <button type="button" onclick="switchDashboardTab('home')" id="bnav-home" class="bnav-item flex-1 flex flex-col items-center justify-center text-[#0066cc] py-1">
+          <i class="fa-solid fa-house text-lg"></i>
+          <span class="text-[11px] font-extrabold mt-1">Home</span>
+        </button>
+
+        <!-- Mutasi -->
+        <button type="button" onclick="switchDashboardTab('mutasi')" id="bnav-mutasi" class="bnav-item flex-1 flex flex-col items-center justify-center text-slate-400 py-1">
+          <i class="fa-regular fa-rectangle-list text-lg"></i>
+          <span class="text-[11px] font-bold mt-1">Mutasi</span>
+        </button>
+
+        <!-- QRIS Bulat Biru Besar Menonjol di Tengah -->
+        <div class="flex-1 flex justify-center -mt-8">
+          <button type="button" onclick="openPremiumPopup('QRIS')" aria-label="QRIS" class="w-16 h-16 rounded-full qris-center-btn flex flex-col items-center justify-center text-white active:scale-90 transition">
+            <div class="relative flex items-center justify-center">
+              <i class="fa-solid fa-expand text-2xl opacity-90"></i>
+              <span class="absolute text-[8px] font-black tracking-tighter bg-[#0062cc] px-0.5">QRIS</span>
+            </div>
+          </button>
+        </div>
+
+        <!-- Aktivitas -->
+        <button type="button" onclick="switchDashboardTab('aktivitas')" id="bnav-aktivitas" class="bnav-item flex-1 flex flex-col items-center justify-center text-slate-400 py-1">
+          <i class="fa-regular fa-envelope text-lg"></i>
+          <span class="text-[11px] font-bold mt-1">Aktivitas</span>
+        </button>
+
+        <!-- Akun -->
+        <button type="button" onclick="switchDashboardTab('akun')" id="bnav-akun" class="bnav-item flex-1 flex flex-col items-center justify-center text-slate-400 py-1">
+          <i class="fa-regular fa-user text-lg"></i>
+          <span class="text-[11px] font-bold mt-1">Akun</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- ==================== MODAL: BUAT AKUN BARU / REGISTRASI ==================== -->
+    <div id="modal-register" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-[380px] rounded-3xl p-6 text-center animate-modal shadow-2xl relative">
+        <button type="button" onclick="closeRegisterModal()" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="w-16 h-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-3xl mx-auto mb-4 border border-blue-100">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+
+        <h3 class="text-base font-extrabold text-slate-800 mb-2">Pendaftaran Akun Baru</h3>
+        <p class="text-xs text-slate-600 leading-relaxed mb-4">
+          Untuk melakukan <span class="font-extrabold text-slate-800">PENDAFTARAN/REGISTRASI</span> Silahkan Hubungi WhatsApp Administrasi:
+        </p>
+
+        <div class="bg-blue-50/70 border border-blue-100 rounded-2xl p-4 text-left mb-5">
+          <p class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mb-1">Administrasi DanaKita</p>
+          <p class="text-sm font-extrabold text-slate-800">ANDINI JULIYASIH</p>
+          <p class="text-xs font-bold text-blue-700 mt-0.5">+62 898-0432-807</p>
+        </div>
+
+        <a href="https://wa.me/628980432807?text=Halo%20kak%20Andini,%20saya%20ingin%20melakukan%20PENDAFTARAN/REGISTRASI%20akun%20baru%20aplikasi%20DANAKITA." target="_blank" rel="noopener noreferrer" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-95 transition">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span>Hubungi WhatsApp Administrasi</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: VERSI PREMIUM (TANPA TOMBOL SELESAI) ==================== -->
+    <div id="modal-premium" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-[385px] rounded-3xl p-6 text-center animate-modal shadow-2xl relative">
+        <button type="button" onclick="closePremiumPopup()" aria-label="Tutup" class="absolute top-4 right-4 w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center active:scale-90">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-3 border border-amber-200">
+          <i class="fa-solid fa-crown"></i>
+        </div>
+
+        <span id="premium-feature-badge" class="inline-block text-[10px] font-extrabold bg-blue-50 text-blue-700 px-3 py-1 rounded-full border border-blue-100 mb-2">
+          Fitur Terkunci
+        </span>
+
+        <p class="text-xs text-slate-700 font-semibold leading-relaxed mb-4">
+          Untuk menggunakan fitur ini Silahkan alihkan ke <span class="font-extrabold text-blue-700">Versi (Premium) Top Up Sebesar Rp 578.000,00</span>
+        </p>
+
+        <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 text-left mb-5">
+          <p class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nomor ADMINISTRASI:</p>
+          <p class="text-xs font-extrabold text-slate-800">&bull; ANDINI JULIYASIH</p>
+          <p class="text-xs font-extrabold text-blue-600 mt-1">&bull; +62 898-0432-807</p>
+        </div>
+
+        <!-- Tombol WhatsApp dengan Pesan Otomatis Persis Spesifikasi -->
+        <a id="premium-wa-link" href="#" target="_blank" rel="noopener noreferrer" class="w-full py-3.5 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 active:scale-95 transition mb-2.5">
+          <i class="fa-brands fa-whatsapp text-lg"></i>
+          <span>Hubungi WhatsApp Admin</span>
+        </a>
+
+        <button type="button" onclick="closePremiumPopup()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition">
+          Tutup
+        </button>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: SEMUA REKENINGMU (DETAIL NOMOR REKENING) ==================== -->
+    <div id="modal-rekening" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
+      <div class="bg-white w-full max-w-[430px] rounded-t-[2rem] sm:rounded-3xl p-6 animate-sheet shadow-2xl">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-4 sm:hidden"></div>
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-extrabold text-slate-800">Semua Rekeningmu</h3>
+          <button type="button" onclick="closeAccountModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="saldo-card-gradient rounded-2xl p-5 text-white shadow-lg mb-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-bold text-blue-100">Tabungan Utama DanaKita</span>
+            <span class="text-[10px] font-extrabold bg-white/20 px-2.5 py-0.5 rounded-full">AKTIF</span>
+          </div>
+          <p class="text-xs text-blue-100">Nomor Rekening</p>
+          <div class="flex items-center justify-between mt-0.5 mb-4">
+            <p class="text-lg font-extrabold tracking-wider">3182 2937 2293 103</p>
+            <button type="button" onclick="copyAccountNumber()" class="px-3 py-1.5 bg-white text-blue-700 rounded-xl text-xs font-extrabold active:scale-95 transition flex items-center gap-1">
+              <i class="fa-regular fa-copy"></i> Salin
+            </button>
+          </div>
+          <div class="pt-3 border-t border-white/20 flex items-center justify-between">
+            <div>
+              <p class="text-[10px] text-blue-100">Nama Pemilik</p>
+              <p class="text-xs font-extrabold" id="modal-rek-owner">RANGGA</p>
+            </div>
+            <div class="text-right">
+              <p class="text-[10px] text-blue-100">Saldo Efektif</p>
+              <p class="text-sm font-extrabold" id="modal-rek-saldo">Rp52.153.000,00</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: UBAH PIN 6 DIGIT ==================== -->
+    <div id="modal-change-pin" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-[385px] rounded-3xl p-6 animate-modal shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-extrabold text-slate-800">Ubah PIN 6 Digit</h3>
+          <button type="button" onclick="closeChangePinModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <form onsubmit="submitChangePin(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">PIN Lama (6 Digit)</label>
+            <input type="password" id="input-old-pin" inputmode="numeric" maxlength="6" required placeholder="Masukkan PIN lama" class="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-2xl font-bold tracking-widest focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">PIN Baru (6 Digit Angka)</label>
+            <input type="password" id="input-new-pin" inputmode="numeric" maxlength="6" required placeholder="Masukkan 6 digit PIN baru" class="w-full px-4 py-3 text-sm bg-slate-50 border border-slate-200 rounded-2xl font-bold tracking-widest focus:outline-none focus:border-blue-600">
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-md active:scale-95 transition">
+            Simpan PIN Baru
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: UBAH PASSWORD LOGIN ==================== -->
+    <div id="modal-change-password" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-[385px] rounded-3xl p-6 animate-modal shadow-2xl">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-base font-extrabold text-slate-800">Ubah Password Login</h3>
+          <button type="button" onclick="closeChangePasswordModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <p class="text-[11px] text-slate-500 mb-4 leading-relaxed">
+          Masukkan password lama Anda, lalu buat password baru dengan kombinasi <b>huruf kapital</b>, <b>huruf kecil</b>, dan <b>angka</b>.
+        </p>
+
+        <form onsubmit="submitChangePassword(event)" class="space-y-3.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Password Lama</label>
+            <input type="password" id="input-old-pass" required placeholder="Masukkan password lama" class="w-full px-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl font-semibold focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Password Baru</label>
+            <input type="password" id="input-new-pass" required placeholder="Contoh: Danakita2026" class="w-full px-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl font-semibold focus:outline-none focus:border-blue-600">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">Konfirmasi Password Baru</label>
+            <input type="password" id="input-confirm-pass" required placeholder="Ulangi password baru" class="w-full px-4 py-3 text-xs bg-slate-50 border border-slate-200 rounded-2xl font-semibold focus:outline-none focus:border-blue-600">
+          </div>
+
+          <button type="submit" class="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-md active:scale-95 transition mt-1">
+            Perbarui Password
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: PUSAT BANTUAN (HELP CENTER) ==================== -->
+    <div id="modal-help-center" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-end sm:items-center justify-center">
+      <div class="bg-white w-full max-w-[430px] max-h-[88vh] rounded-t-[2rem] sm:rounded-3xl p-6 animate-sheet shadow-2xl flex flex-col">
+        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-3 sm:hidden"></div>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-800">Pusat Bantuan (Help Center)</h3>
+            <p class="text-[11px] text-slate-500">Pengaduan transaksi, status tiket & FAQ</p>
+          </div>
+          <button type="button" onclick="closeHelpModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="overflow-y-auto no-scrollbar space-y-4 pr-0.5">
+          <!-- Form Buat Laporan Pengaduan -->
+          <div class="bg-slate-50 rounded-2xl p-4 border border-slate-200/80">
+            <h4 class="text-xs font-extrabold text-slate-800 mb-2.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-file-circle-exclamation text-blue-600"></i> Buat Laporan / Pengaduan Transaksi
+            </h4>
+            <form onsubmit="submitHelpTicket(event)" class="space-y-2.5">
+              <select id="ticket-category" class="w-full px-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl font-semibold text-slate-700">
+                <option value="Transaksi Gagal / Tertunda">Transaksi Gagal / Tertunda</option>
+                <option value="Aktivasi Versi Premium">Aktivasi Versi Premium</option>
+                <option value="Kendala Akun & Keamanan">Kendala Akun & Keamanan</option>
+              </select>
+              <textarea id="ticket-desc" rows="2" required placeholder="Jelaskan kendala transaksi Anda..." class="w-full px-3 py-2 text-xs bg-white border border-slate-200 rounded-xl font-medium focus:outline-none focus:border-blue-600"></textarea>
+              <button type="submit" class="w-full py-2.5 bg-blue-600 text-white font-extrabold text-xs rounded-xl active:scale-95 transition">
+                Kirim Tiket Pengaduan
+              </button>
+            </form>
+          </div>
+
+          <!-- Status Tiket Pengaduan -->
+          <div>
+            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">Status Tiket Pengaduan Anda</h4>
+            <div id="help-tickets-list" class="space-y-2">
+              <!-- Diisi dari localStorage -->
+            </div>
+          </div>
+
+          <!-- FAQ Interaktif -->
+          <div>
+            <h4 class="text-xs font-extrabold text-slate-600 uppercase tracking-wider mb-2">Pertanyaan Umum (FAQ)</h4>
+            <div class="space-y-2">
+              <details class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs">
+                <summary class="font-extrabold text-slate-800 cursor-pointer">Bagaimana cara mengaktifkan Versi Premium?</summary>
+                <p class="text-slate-600 mt-2 leading-relaxed">Silakan lakukan Top Up aktivasi sebesar Rp 578.000,00 melalui Administrasi resmi DanaKita (Andini Juliyasih: +62 898-0432-807).</p>
+              </details>
+              <details class="bg-slate-50 border border-slate-200/80 rounded-2xl p-3 text-xs">
+                <summary class="font-extrabold text-slate-800 cursor-pointer">Apakah saldo utama dapat langsung dilihat?</summary>
+                <p class="text-slate-600 mt-2 leading-relaxed">Ya, tekan ikon mata pada kartu biru Saldo Rekening Utama di halaman Beranda untuk menampilkan atau menyembunyikan saldo.</p>
+              </details>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MODAL: NOTIFIKASI LONCENG ==================== -->
+    <div id="modal-notifications" class="fixed inset-0 bg-slate-900/75 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-[385px] rounded-3xl p-6 animate-modal shadow-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-base font-extrabold text-slate-800">Notifikasi</h3>
+          <button type="button" onclick="closeNotificationsModal()" class="w-9 h-9 rounded-full bg-slate-100 text-slate-500 flex items-center justify-center">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3.5 rounded-2xl bg-blue-50/70 border border-blue-100">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-[10px] font-extrabold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">Dana Masuk</span>
+              <span class="text-[10px] text-slate-400 font-semibold">Hari ini 10:47 WIB</span>
+            </div>
+            <p class="text-xs font-extrabold text-slate-800">Transfer Masuk +Rp52.153.000,00</p>
+            <p class="text-[11px] text-slate-600 mt-0.5">Pengirim: PT.BANK RAKYAT INDONESIA (PERSERO),Tbk.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== JAVASCRIPT LOGIC & LOCALSTORAGE ==================== -->
+  <script>
+    // Kunci penyimpanan localStorage
+    const STORAGE_KEYS = {
+      ACCOUNT: 'danakita_account_rangga_v1',
+      MUTASI: 'danakita_mutasi_rangga_v1',
+      TICKETS: 'danakita_tickets_rangga_v1',
+      SESSION: 'danakita_session_active_v1'
+    };
+
+    // Data Default Akun RANGGA
+    const DEFAULT_ACCOUNT_DATA = {
+      name: 'RANGGA',
+      displayName: 'Rangga',
+      username: 'Rangga_123',
+      password: 'Danakita123',
+      pin: '111222',
+      accountNumber: '3182 2937 2293 103',
+      balance: 52153000
+    };
+
+    // Data Default Mutasi Real-time
+    const DEFAULT_MUTASI_LIST = [
+      {
+        id: 'TRX-20261114-01',
+        type: 'IN',
+        title: 'Uang Masuk',
+        amount: 52153000,
+        sender: 'PT.BANK RAKYAT INDONESIA (PERSERO),Tbk.',
+        timestamp: 'Hari ini 10:47 WIB',
+        note: 'Transfer Dana Masuk Rekening Utama'
+      }
+    ];
+
+    // State runtime
+    let currentPinBuffer = '';
+    let isSaldoVisible = false;
+
+    // Inisialisasi aplikasi saat halaman dimuat
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeLocalStorage();
+      setupPremiumWhatsAppLink();
+      clearAllLoginFields();
+
+      // Cek sesi login aktif
+      if (sessionStorage.getItem(STORAGE_KEYS.SESSION) === 'authenticated') {
+        enterDashboard();
+      } else {
+        showLoginScreen();
+      }
+    });
+
+    // Pastikan data tersimpan di localStorage
+    function initializeLocalStorage() {
+      if (!localStorage.getItem(STORAGE_KEYS.ACCOUNT)) {
+        localStorage.setItem(STORAGE_KEYS.ACCOUNT, JSON.stringify(DEFAULT_ACCOUNT_DATA));
+      }
+      if (!localStorage.getItem(STORAGE_KEYS.MUTASI)) {
+        localStorage.setItem(STORAGE_KEYS.MUTASI, JSON.stringify(DEFAULT_MUTASI_LIST));
+      }
+      if (!localStorage.getItem(STORAGE_KEYS.TICKETS)) {
+        localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify([]));
+      }
+    }
+
+    function getAccountData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACCOUNT)) || DEFAULT_ACCOUNT_DATA;
+      } catch (e) {
+        return DEFAULT_ACCOUNT_DATA;
+      }
+    }
+
+    function saveAccountData(data) {
+      localStorage.setItem(STORAGE_KEYS.ACCOUNT, JSON.stringify(data));
+    }
+
+    function getMutasiData() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.MUTASI)) || DEFAULT_MUTASI_LIST;
+      } catch (e) {
+        return DEFAULT_MUTASI_LIST;
+      }
+    }
+
+    // Format Rupiah Indonesia presisi (Rp52.153.000,00)
+    function formatRupiah(amount) {
+      const formatted = Number(amount).toLocaleString('id-ID', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+      return 'Rp' + formatted;
+    }
+
+    // Toast Notification (Pengganti alert() sesuai aturan)
+    let toastTimer = null;
+    function showToast(message, isError = false) {
+      const toast = document.getElementById('custom-toast');
+      const icon = document.getElementById('custom-toast-icon');
+      const msg = document.getElementById('custom-toast-msg');
+
+      msg.textContent = message;
+      if (isError) {
+        icon.className = 'fa-solid fa-circle-exclamation text-rose-400 text-base';
+      } else {
+        icon.className = 'fa-solid fa-circle-check text-emerald-400 text-base';
+      }
+
+      toast.classList.remove('hidden');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => {
+        toast.classList.add('hidden');
+      }, 3000);
+    }
+
+    // Bersihkan kolom username, password, dan PIN
+    function clearAllLoginFields() {
+      const uField = document.getElementById('login-username');
+      const pField = document.getElementById('login-password');
+      if (uField) uField.value = '';
+      if (pField) pField.value = '';
+      currentPinBuffer = '';
+      renderPinDots();
+    }
+
+    // ==================== LOGIKA LOGIN & VERIFIKASI PIN ====================
+    function submitLoginCredentials(event) {
+      event.preventDefault();
+      const inputUser = document.getElementById('login-username').value.trim();
+      const inputPass = document.getElementById('login-password').value;
+      const errBox = document.getElementById('login-error-box');
+      const errMsg = document.getElementById('login-error-msg');
+      const account = getAccountData();
+
+      if (inputUser === account.username && inputPass === account.password) {
+        errBox.classList.add('hidden');
+        openPinVerifyModal();
+      } else {
+        errMsg.textContent = 'Username atau Password tidak valid. Silakan coba lagi.';
+        errBox.classList.remove('hidden');
+      }
+    }
+
+    function openPinVerifyModal() {
+      currentPinBuffer = '';
+      renderPinDots();
+      document.getElementById('pin-error-text').classList.add('hidden');
+      document.getElementById('modal-pin-verify').classList.remove('hidden');
+    }
+
+    function closePinVerifyModal() {
+      currentPinBuffer = '';
+      renderPinDots();
+      document.getElementById('modal-pin-verify').classList.add('hidden');
+    }
+
+    function inputPinDigit(digit) {
+      if (currentPinBuffer.length >= 6) return;
+      currentPinBuffer += digit;
+      document.getElementById('pin-error-text').classList.add('hidden');
+      renderPinDots();
+
+      if (currentPinBuffer.length === 6) {
+        setTimeout(verifyEnteredPin, 140);
+      }
+    }
+
+    function backspacePinDigit() {
+      if (currentPinBuffer.length > 0) {
+        currentPinBuffer = currentPinBuffer.slice(0, -1);
+        renderPinDots();
+      }
+    }
+
+    function clearPinDigits() {
+      currentPinBuffer = '';
+      renderPinDots();
+    }
+
+    function renderPinDots() {
+      const slots = document.querySelectorAll('.pin-slot');
+      slots.forEach((slot, idx) => {
+        if (idx < currentPinBuffer.length) {
+          slot.textContent = '•';
+          slot.classList.add('border-blue-600', 'bg-blue-50');
+          slot.classList.remove('border-slate-200', 'bg-slate-50');
+        } else {
+          slot.textContent = '';
+          slot.classList.remove('border-blue-600', 'bg-blue-50');
+          slot.classList.add('border-slate-200', 'bg-slate-50');
+        }
+      });
+    }
+
+    function verifyEnteredPin() {
+      const account = getAccountData();
+      if (currentPinBuffer === account.pin) {
+        closePinVerifyModal();
+        clearAllLoginFields();
+        sessionStorage.setItem(STORAGE_KEYS.SESSION, 'authenticated');
+        enterDashboard();
+      } else {
+        document.getElementById('pin-error-text').classList.remove('hidden');
+        currentPinBuffer = '';
+        renderPinDots();
+      }
+    }
+
+    function showLoginScreen() {
+      clearAllLoginFields();
+      document.getElementById('screen-dashboard').classList.add('hidden');
+      document.getElementById('screen-login').classList.remove('hidden');
+    }
+
+    function enterDashboard() {
+      document.getElementById('screen-login').classList.add('hidden');
+      document.getElementById('screen-dashboard').classList.remove('hidden');
+      isSaldoVisible = false;
+      renderAllDashboardData();
+      switchDashboardTab('home');
+    }
+
+    function logoutUser() {
+      sessionStorage.removeItem(STORAGE_KEYS.SESSION);
+      clearAllLoginFields();
+      showLoginScreen();
+      showToast('Anda telah keluar dari akun DanaKita.');
+    }
+
+    function toggleInputPassword(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+      }
+    }
+
+    // ==================== RENDER DATA DASHBOARD ====================
+    function renderAllDashboardData() {
+      const account = getAccountData();
+      const formattedSaldo = formatRupiah(account.balance);
+
+      // Update nama & info rekening di seluruh tab
+      document.getElementById('display-user-greeting').textContent = account.displayName || 'Rangga';
+      document.getElementById('mutasi-owner-name').textContent = account.name;
+      document.getElementById('mutasi-account-number').textContent = account.accountNumber;
+      document.getElementById('akun-avatar-initial').textContent = account.name.charAt(0).toUpperCase();
+      document.getElementById('akun-header-name').textContent = account.name;
+      document.getElementById('akun-header-username').textContent = '@' + account.username;
+      document.getElementById('detail-nama-rekening').textContent = account.name;
+      document.getElementById('detail-nomor-rekening').textContent = account.accountNumber;
+      document.getElementById('detail-username').textContent = account.username;
+      document.getElementById('modal-rek-owner').textContent = account.name;
+      document.getElementById('modal-rek-saldo').textContent = formattedSaldo;
+
+      updateSaldoUI();
+      renderMutasiAndAktivitas();
+      renderHelpTickets();
+    }
+
+    // Toggle Saldo Rekening Utama (Default tersembunyi •••••• -> Rp52.153.000,00)
+    function toggleSaldoDisplay() {
+      isSaldoVisible = !isSaldoVisible;
+      updateSaldoUI();
+    }
+
+    function updateSaldoUI() {
+      const account = getAccountData();
+      const displayEl = document.getElementById('saldo-value-display');
+      const eyeIcon = document.getElementById('saldo-eye-icon');
+
+      if (isSaldoVisible) {
+        displayEl.innerHTML = `<span>${formatRupiah(account.balance)}</span>`;
+        eyeIcon.className = 'fa-solid fa-eye-slash text-base';
+      } else {
+        displayEl.innerHTML = `
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+          <span class="inline-block w-2.5 h-2.5 bg-white rounded-full"></span>
+        `;
+        eyeIcon.className = 'fa-solid fa-eye text-base';
+      }
+    }
+
+    // Render Mutasi & Aktivitas dari localStorage
+    function renderMutasiAndAktivitas() {
+      const mutasiList = getMutasiData();
+      const mutasiContainer = document.getElementById('mutasi-list-container');
+      const aktivitasContainer = document.getElementById('aktivitas-list-container');
+
+      let totalIn = 0;
+      let totalOut = 0;
+
+      mutasiContainer.innerHTML = '';
+      aktivitasContainer.innerHTML = '';
+
+      mutasiList.forEach(item => {
+        if (item.type === 'IN') totalIn += item.amount;
+        else totalOut += item.amount;
+
+        const isIncoming = item.type === 'IN';
+        const amountFormatted = (isIncoming ? '+' : '-') + formatRupiah(item.amount);
+
+        // Card untuk Tab Mutasi
+        const mutasiCard = `
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-start gap-3.5">
+            <div class="w-11 h-11 rounded-2xl ${isIncoming ? 'bg-emerald-50 text-emerald-600 border-emerald-100' : 'bg-rose-50 text-rose-600 border-rose-100'} border flex items-center justify-center shrink-0">
+              <i class="fa-solid ${isIncoming ? 'fa-arrow-down-left' : 'fa-arrow-up-right'} text-lg"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-2">
+                <p class="text-xs font-extrabold text-slate-800">${item.title}</p>
+                <span class="text-xs font-extrabold ${isIncoming ? 'text-emerald-600' : 'text-rose-600'} shrink-0">${amountFormatted}</span>
+              </div>
+              <p class="text-[11px] font-bold text-slate-600 mt-1 leading-snug">Nama Pengirim: ${item.sender}</p>
+              <div class="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 font-semibold">
+                <span><i class="fa-regular fa-clock mr-1"></i>${item.timestamp}</span>
+                <span class="text-emerald-600 font-bold">Berhasil</span>
+              </div>
+            </div>
+          </div>
+        `;
+        mutasiContainer.insertAdjacentHTML('beforeend', mutasiCard);
+
+        // Card untuk Tab Aktivitas
+        const aktivitasCard = `
+          <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                <i class="fa-solid fa-receipt"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="text-xs font-extrabold text-slate-800 truncate">${item.title} - ${item.sender}</p>
+                <p class="text-[10px] text-slate-400 font-semibold mt-0.5">${item.timestamp}</p>
+              </div>
+            </div>
+            <span class="text-xs font-extrabold ${isIncoming ? 'text-emerald-600' : 'text-rose-600'} shrink-0">${amountFormatted}</span>
+          </div>
+        `;
+        aktivitasContainer.insertAdjacentHTML('beforeend', aktivitasCard);
+      });
+
+      document.getElementById('aktivitas-total-in').textContent = formatRupiah(totalIn);
+      document.getElementById('aktivitas-total-out').textContent = formatRupiah(totalOut);
+    }
+
+    // ==================== PENCARIAN FITUR REAL-TIME ====================
+    function filterDashboardFeatures(query) {
+      const q = query.toLowerCase().trim();
+      const items = document.querySelectorAll('.searchable-service');
+      const clearBtn = document.getElementById('clear-search-btn');
+      const countLabel = document.getElementById('search-result-count');
+      const emptyState = document.getElementById('empty-search-state');
+
+      if (q.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+      }
+
+      let visibleCount = 0;
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        const keywords = (item.getAttribute('data-keywords') || '').toLowerCase();
+        if (text.includes(q) || keywords.includes(q)) {
+          item.style.display = 'flex';
+          visibleCount++;
+        } else {
+          item.style.display = 'none';
+        }
+      });
+
+      if (q.length > 0) {
+        countLabel.textContent = `${visibleCount} fitur ditemukan`;
+        countLabel.classList.remove('hidden');
+      } else {
+        countLabel.classList.add('hidden');
+      }
+
+      if (visibleCount === 0) {
+        emptyState.classList.remove('hidden');
+      } else {
+        emptyState.classList.add('hidden');
+      }
+    }
+
+    function clearFeatureSearch() {
+      const input = document.getElementById('feature-search-input');
+      input.value = '';
+      filterDashboardFeatures('');
+    }
+
+    // ==================== BOTTOM NAVIGATION TABS ====================
+    function switchDashboardTab(tabKey) {
+      document.querySelectorAll('.app-tab').forEach(tab => tab.classList.add('hidden'));
+      document.querySelectorAll('.bnav-item').forEach(btn => {
+        btn.classList.remove('text-[#0066cc]');
+        btn.classList.add('text-slate-400');
+      });
+
+      const targetTab = document.getElementById(`tab-${tabKey}`);
+      const targetNav = document.getElementById(`bnav-${tabKey}`);
+      if (targetTab) targetTab.classList.remove('hidden');
+      if (targetNav) {
+        targetNav.classList.remove('text-slate-400');
+        targetNav.classList.add('text-[#0066cc]');
+      }
+    }
+
+    // ==================== SALIN NOMOR REKENING ====================
+    function copyAccountNumber() {
+      const account = getAccountData();
+      const rawNumber = account.accountNumber.replace(/\s+/g, '');
+      const tempInput = document.createElement('input');
+      tempInput.value = rawNumber;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand('copy');
+      document.body.removeChild(tempInput);
+      showToast(`Nomor rekening ${account.accountNumber} berhasil disalin!`);
+    }
+
+    // ==================== POP-UP PREMIUM & REGISTRASI ====================
+    function setupPremiumWhatsAppLink() {
+      const autoMessage = 'Halo kak Andini, Saya Besedia untuk menyelesaikanTop Up/Administrasi Saya agar Fitur Aplikasi DANAKITA bisa digunakan,Mohon Cantumkan Nomor Rekening atau Nomor E-Wallet Yang Tersedia.';
+      const url = `https://wa.me/628980432807?text=${encodeURIComponent(autoMessage)}`;
+      document.getElementById('premium-wa-link').href = url;
+    }
+
+    function openPremiumPopup(featureName) {
+      document.getElementById('premium-feature-badge').textContent = `Fitur ${featureName}`;
+      document.getElementById('modal-premium').classList.remove('hidden');
+    }
+
+    function closePremiumPopup() {
+      document.getElementById('modal-premium').classList.add('hidden');
+    }
+
+    function openRegisterModal() {
+      document.getElementById('modal-register').classList.remove('hidden');
+    }
+
+    function closeRegisterModal() {
+      document.getElementById('modal-register').classList.add('hidden');
+    }
+
+    function openAccountModal() {
+      document.getElementById('modal-rekening').classList.remove('hidden');
+    }
+
+    function closeAccountModal() {
+      document.getElementById('modal-rekening').classList.add('hidden');
+    }
+
+    function openNotificationsModal() {
+      document.getElementById('modal-notifications').classList.remove('hidden');
+    }
+
+    function closeNotificationsModal() {
+      document.getElementById('modal-notifications').classList.add('hidden');
+    }
+
+    // ==================== KEAMANAN AKUN: UBAH PIN & PASSWORD ====================
+    function openChangePinModal() {
+      document.getElementById('input-old-pin').value = '';
+      document.getElementById('input-new-pin').value = '';
+      document.getElementById('modal-change-pin').classList.remove('hidden');
+    }
+
+    function closeChangePinModal() {
+      document.getElementById('modal-change-pin').classList.add('hidden');
+    }
+
+    function submitChangePin(event) {
+      event.preventDefault();
+      const oldPin = document.getElementById('input-old-pin').value.trim();
+      const newPin = document.getElementById('input-new-pin').value.trim();
+      const account = getAccountData();
+
+      if (oldPin !== account.pin) {
+        showToast('PIN lama Anda tidak sesuai!', true);
+        return;
+      }
+
+      if (!/^\d{6}$/.test(newPin)) {
+        showToast('PIN baru harus terdiri dari 6 digit angka!', true);
+        return;
+      }
+
+      account.pin = newPin;
+      saveAccountData(account);
+      closeChangePinModal();
+      showToast('PIN 6 Digit berhasil diperbarui!');
+    }
+
+    function openChangePasswordModal() {
+      document.getElementById('input-old-pass').value = '';
+      document.getElementById('input-new-pass').value = '';
+      document.getElementById('input-confirm-pass').value = '';
+      document.getElementById('modal-change-password').classList.remove('hidden');
+    }
+
+    function closeChangePasswordModal() {
+      document.getElementById('modal-change-password').classList.add('hidden');
+    }
+
+    function submitChangePassword(event) {
+      event.preventDefault();
+      const oldPass = document.getElementById('input-old-pass').value;
+      const newPass = document.getElementById('input-new-pass').value;
+      const confirmPass = document.getElementById('input-confirm-pass').value;
+      const account = getAccountData();
+
+      if (oldPass !== account.password) {
+        showToast('Password lama Anda salah!', true);
+        return;
+      }
+
+      // Syarat kombinasi: huruf kapital, huruf kecil, dan angka
+      const hasUppercase = /[A-Z]/.test(newPass);
+      const hasLowercase = /[a-z]/.test(newPass);
+      const hasNumber = /[0-9]/.test(newPass);
+
+      if (!hasUppercase || !hasLowercase || !hasNumber || newPass.length < 6) {
+        showToast('Password baru wajib mengombinasikan huruf kapital, huruf kecil, dan angka!', true);
+        return;
+      }
+
+      if (newPass !== confirmPass) {
+        showToast('Konfirmasi password baru tidak cocok!', true);
+        return;
+      }
+
+      account.password = newPass;
+      saveAccountData(account);
+      closeChangePasswordModal();
+      showToast('Password login berhasil diperbarui!');
+    }
+
+    // ==================== PUSAT BANTUAN (HELP CENTER & TIKET) ====================
+    function openHelpModal() {
+      renderHelpTickets();
+      document.getElementById('modal-help-center').classList.remove('hidden');
+    }
+
+    function closeHelpModal() {
+      document.getElementById('modal-help-center').classList.add('hidden');
+    }
+
+    function submitHelpTicket(event) {
+      event.preventDefault();
+      const category = document.getElementById('ticket-category').value;
+      const desc = document.getElementById('ticket-desc').value.trim();
+      if (!desc) return;
+
+      const tickets = JSON.parse(localStorage.getItem(STORAGE_KEYS.TICKETS) || '[]');
+      const newTicket = {
+        id: 'DK-' + Math.floor(100000 + Math.random() * 900000),
+        category: category,
+        desc: desc,
+        status: 'Dalam Peninjauan',
+        createdAt: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB'
+      };
+
+      tickets.unshift(newTicket);
+      localStorage.setItem(STORAGE_KEYS.TICKETS, JSON.stringify(tickets));
+      document.getElementById('ticket-desc').value = '';
+      renderHelpTickets();
+      showToast(`Tiket pengaduan #${newTicket.id} berhasil dibuat!`);
+    }
+
+    function renderHelpTickets() {
+      const container = document.getElementById('help-tickets-list');
+      if (!container) return;
+      const tickets = JSON.parse(localStorage.getItem(STORAGE_KEYS.TICKETS) || '[]');
+
+      if (tickets.length === 0) {
+        container.innerHTML = `
+          <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-100 text-center text-[11px] text-slate-400 font-semibold">
+            Belum ada tiket pengaduan aktif.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = tickets.map(t => `
+        <div class="p-3 rounded-2xl bg-white border border-slate-200/80 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <span class="text-[10px] font-extrabold text-blue-700">#${t.id} &bull; ${t.category}</span>
+            <span class="text-[10px] font-extrabold bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full">${t.status}</span>
+          </div>
+          <p class="text-xs text-slate-700 font-medium">${t.desc}</p>
+          <p class="text-[10px] text-slate-400 mt-1">Dibuat pukul ${t.createdAt}</p>
+        </div>
+      `).join('');
+    }
+  </script>
+</body>
+</html>
